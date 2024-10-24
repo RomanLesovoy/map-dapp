@@ -5,8 +5,8 @@ import { BlockchainService, BlockInfo } from '../blockchain/blockchain.service';
 export class BlocksService {
   constructor(private blockchainService: BlockchainService) {}
 
-  async buyBlock(blockId: number, buyer: string): Promise<boolean> {
-    return await this.blockchainService.buyBlock(blockId, buyer);
+  async buyBlock(blockId: number, userAddress: string): Promise<boolean> {
+    return await this.blockchainService.buyBlock(blockId, userAddress);
   }
 
   async sellBlock(blockId: number, seller: string, price: string): Promise<boolean> {

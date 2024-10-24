@@ -100,8 +100,8 @@ describe('BlocksService', () => {
   describe('getAllBlocksInfo', () => {
     it('should return block info for a range of blocks', async () => {
       const mockBlocksInfo: BlockInfo[] = [
-        { owned: true, owner: '0x123...', color: 1, price: ethers.parseEther('0.1') },
-        { owned: false, owner: '0x000...', color: 0, price: ethers.parseEther('0') },
+        { owned: true, owner: '0x123...', color: 1, price: ethers.parseEther('0.1').toString() },
+        { owned: false, owner: '0x000...', color: 0, price: ethers.parseEther('0').toString() },
       ];
       blockchainService.getAllBlocksInfo.mockResolvedValue(mockBlocksInfo);
 

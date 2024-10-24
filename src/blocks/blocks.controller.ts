@@ -1,10 +1,12 @@
-import { Controller, Get, Post, Param, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { BlocksService } from './blocks.service';
 import { BlockInfo } from '../blockchain/blockchain.service';
+import { AuthGuard } from '../auth/auth.guard';
 
 @ApiTags('blocks')
 @Controller('blocks')
+@UseGuards(AuthGuard)
 export class BlocksController {
   constructor(private readonly blocksService: BlocksService) {}
 
@@ -13,8 +15,9 @@ export class BlocksController {
   @ApiParam({ name: 'id', type: 'number' })
   @ApiBody({ schema: { properties: { buyer: { type: 'string' } } } })
   @ApiResponse({ status: 200, description: 'The block has been successfully bought.' })
-  async buyBlock(@Param('id') id: string, @Body('buyer') buyer: string) {
-    return await this.blocksService.buyBlock(parseInt(id), buyer);
+  async buyBlock(@Param('id') id: string, @Request() req) {
+    const userAddress = req.user.address;
+    return await this.blocksService.buyBlock(parseInt(id), userAddress);
   }
 
   @Post(':id/sell')
@@ -68,6 +71,15 @@ export class BlocksController {
     return await this.blocksService.buyMultipleBlocks(blockIds, buyer);
   }
 
+  /**
+   * todo maybe load only 100 blocks at a time
+   * todo maybe add pagination
+   * todo maybe load blocks colors
+   * 
+   * @param startId 
+   * @param endId 
+   * @returns 
+   */
   @Get()
   @ApiOperation({ summary: 'Get all blocks info' })
   @ApiQuery({ name: 'startId', type: 'number' })

@@ -4,12 +4,6 @@ import * as dotenv from 'dotenv';
 import { ApiProperty } from '@nestjs/swagger';
 dotenv.config();
 
-export interface Block {
-  owner: string;
-  color: string;
-  price: ethers.BigNumberish;
-}
-
 export class BlockInfo {
   @ApiProperty()
   owned: boolean;
@@ -21,7 +15,7 @@ export class BlockInfo {
   color: number;
 
   @ApiProperty()
-  price: ethers.BigNumberish;
+  price: string;
 }
 
 interface ContractWithSigner extends BaseContract {
@@ -49,7 +43,7 @@ export class BlockchainService {
       "function setColor(uint256 blockId, uint8 color) public",
       "function getBlockInfo(uint256 blockId) public view returns (bool owned, address owner, uint8 color, uint256 price)",
       "function buyMultipleBlocks(uint256[] memory blockIds) public payable",
-      "function getAllBlocksInfo(uint256 startId, uint256 endId) public view returns (BlockInfo[] memory)"
+      "function getAllBlocksInfo(uint256 startId, uint256 endId) public view returns (tuple(bool owned, address owner, uint8 color, uint256 price)[] memory)"
     ];
     this.contract = new ethers.Contract(contractAddress, abi, this.provider);
   }
@@ -101,6 +95,19 @@ export class BlockchainService {
   }
 
   async getAllBlocksInfo(startId: number, endId: number): Promise<BlockInfo[]> {
-    return await this.contract.getAllBlocksInfo(startId, endId);
+    try {
+      const blocksInfo = await this.contract.getAllBlocksInfo(startId, endId);
+      const serizlizedBlocksInfo = blocksInfo.map((block: BlockInfo) => ({
+        owned: block.owned,
+        owner: String(block.owner),
+        color: String(block.color),
+        price: block.price.toString() // BigInt to string
+      }));
+
+      return serizlizedBlocksInfo;
+    } catch (e) {
+      console.error('Error in getAllBlocksInfo:', e.message);
+      throw e;
+    }
   }
 }
