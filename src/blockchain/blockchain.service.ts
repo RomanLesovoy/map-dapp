@@ -40,7 +40,7 @@ export class BlockchainService {
   private contract: ethers.Contract;
 
   constructor() {
-    this.provider = new ethers.JsonRpcProvider('http://localhost:8545');
+    this.provider = new ethers.JsonRpcProvider(process.env.ETHEREUM_PROVIDER_URL);
     const contractAddress = process.env.CONTRACT_ADDRESS;
     const abi = [
       "function buyBlock(uint256 blockId) public payable",
