@@ -53,15 +53,83 @@ npm run test
 
 ## API Endpoints
 
-- `GET /blocks/:id/owner` - Get the owner of a block
-- `POST /blocks/:id/buy` - Buy a block
-- `POST /blocks/:id/sell` - Put a block up for sale
-- `POST /blocks/:id/color` - Change the color of a block
-- `GET /blocks/:id/color` - Get the color of a block
+The Block Trading API provides the following endpoints:
+
+### Get All Blocks Info
+- **GET** `/blocks`
+- **Query Parameters**: 
+  - `startId`: number (starting block ID)
+  - `endId`: number (ending block ID)
+- **Description**: Returns information about blocks in the specified range.
+- **Response**: Array of BlockInfo objects
+
+### Get Single Block Info
+- **GET** `/blocks/:id`
+- **Parameters**: 
+  - `id`: number (block ID)
+- **Description**: Returns information about a specific block.
+- **Response**: BlockInfo object
+
+### Buy Block
+- **POST** `/blocks/:id/buy`
+- **Parameters**: 
+  - `id`: number (block ID)
+- **Body**: 
+  - `buyer`: string (Ethereum address of the buyer)
+- **Description**: Purchases a block.
+- **Response**: Boolean indicating success
+
+### Sell Block
+- **POST** `/blocks/:id/sell`
+- **Parameters**: 
+  - `id`: number (block ID)
+- **Body**: 
+  - `seller`: string (Ethereum address of the seller)
+  - `price`: string (price in ETH)
+- **Description**: Lists a block for sale.
+- **Response**: Boolean indicating success
+
+### Buy Block From User
+- **POST** `/blocks/:id/buy-from-user`
+- **Parameters**: 
+  - `id`: number (block ID)
+- **Body**: 
+  - `buyer`: string (Ethereum address of the buyer)
+- **Description**: Purchases a block that is listed for sale by another user.
+- **Response**: Boolean indicating success
+
+### Set Block Color
+- **POST** `/blocks/:id/color`
+- **Parameters**: 
+  - `id`: number (block ID)
+- **Body**: 
+  - `color`: number (color code)
+  - `owner`: string (Ethereum address of the block owner)
+- **Description**: Sets the color of a block.
+- **Response**: Boolean indicating success
+
+### Buy Multiple Blocks
+- **POST** `/blocks/buy-multiple`
+- **Body**: 
+  - `blockIds`: number[] (array of block IDs to purchase)
+  - `buyer`: string (Ethereum address of the buyer)
+- **Description**: Purchases multiple blocks in a single transaction.
+- **Response**: Boolean indicating success
+
+## BlockInfo Object
+
+The BlockInfo object contains the following properties:
+
+- `owned`: boolean (indicates if the block is owned)
+- `owner`: string (Ethereum address of the owner)
+- `color`: number (color code of the block)
+- `price`: string (price of the block in ETH)
 
 ## Smart Contract Interaction
 
 The project uses `BlockchainService` to interact with the smart contract. Make sure you have a local Hardhat node running or have set up a connection to an Ethereum test network.
+
+Smart contract repository: https://github.com/RomanLesovoy/map-dapp-contract
 
 ## Development
 
