@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { BaseContract, ethers } from 'ethers';
 import * as dotenv from 'dotenv';
+import { ApiProperty } from '@nestjs/swagger';
 dotenv.config();
 
 export interface Block {
@@ -9,10 +10,17 @@ export interface Block {
   price: ethers.BigNumberish;
 }
 
-export interface BlockInfo {
+export class BlockInfo {
+  @ApiProperty()
   owned: boolean;
+
+  @ApiProperty()
   owner: string;
+
+  @ApiProperty()
   color: number;
+
+  @ApiProperty()
   price: ethers.BigNumberish;
 }
 
