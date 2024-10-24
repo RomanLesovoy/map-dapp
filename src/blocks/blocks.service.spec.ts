@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BlocksService } from './blocks.service';
-import { BlockchainService } from '../blockchain/blockchain.service';
+import { BlockchainService, BlockInfo } from '../blockchain/blockchain.service';
+import { ethers } from 'ethers';
 
-// Мок для BlockchainService
+// Mock for BlockchainService
 jest.mock('../blockchain/blockchain.service');
 
 describe('BlocksService', () => {
@@ -20,17 +21,6 @@ describe('BlocksService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
-  });
-
-  describe('getBlockOwner', () => {
-    it('should return the owner of a block', async () => {
-      const mockOwner = '0x1234567890123456789012345678901234567890';
-      blockchainService.getBlockOwner.mockResolvedValue(mockOwner);
-
-      const result = await service.getBlockOwner(1);
-      expect(result).toBe(mockOwner);
-      expect(blockchainService.getBlockOwner).toHaveBeenCalledWith(1);
-    });
   });
 
   describe('buyBlock', () => {
@@ -56,25 +46,68 @@ describe('BlocksService', () => {
     });
   });
 
-  describe('changeBlockColor', () => {
-    it('should change the color of a block', async () => {
-      const mockOwner = '0x1234567890123456789012345678901234567890';
-      blockchainService.changeBlockColor.mockResolvedValue(true);
+  describe('buyFromUser', () => {
+    it('should buy a block from another user', async () => {
+      const mockBuyer = '0x1234567890123456789012345678901234567890';
+      blockchainService.buyFromUser.mockResolvedValue(true);
 
-      const result = await service.changeBlockColor(1, 'black', mockOwner);
+      const result = await service.buyFromUser(1, mockBuyer);
       expect(result).toBe(true);
-      expect(blockchainService.changeBlockColor).toHaveBeenCalledWith(1, 'black', mockOwner);
+      expect(blockchainService.buyFromUser).toHaveBeenCalledWith(1, mockBuyer);
     });
   });
 
-  describe('getBlockColor', () => {
-    it('should return the color of a block', async () => {
-      const mockColor = 'black';
-      blockchainService.getBlockColor.mockResolvedValue(mockColor);
+  describe('setBlockColor', () => {
+    it('should set the color of a block', async () => {
+      const mockOwner = '0x1234567890123456789012345678901234567890';
+      const mockColor = 1;
+      blockchainService.setBlockColor.mockResolvedValue(true);
 
-      const result = await service.getBlockColor(1);
-      expect(result).toBe(mockColor);
-      expect(blockchainService.getBlockColor).toHaveBeenCalledWith(1);
+      const result = await service.setBlockColor(1, mockColor, mockOwner);
+      expect(result).toBe(true);
+      expect(blockchainService.setBlockColor).toHaveBeenCalledWith(1, mockColor, mockOwner);
+    });
+  });
+
+  describe('getBlockInfo', () => {
+    it('should return block info', async () => {
+      const mockBlockInfo: BlockInfo = {
+        owned: true,
+        owner: '0x1234567890123456789012345678901234567890',
+        color: 1,
+        price: '0.1'
+      };
+      blockchainService.getBlockInfo.mockResolvedValue(mockBlockInfo);
+
+      const result = await service.getBlockInfo(1);
+      expect(result).toEqual(mockBlockInfo);
+      expect(blockchainService.getBlockInfo).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe('buyMultipleBlocks', () => {
+    it('should buy multiple blocks', async () => {
+      const mockBuyer = '0x1234567890123456789012345678901234567890';
+      const mockBlockIds = [1, 2, 3];
+      blockchainService.buyMultipleBlocks.mockResolvedValue(true);
+
+      const result = await service.buyMultipleBlocks(mockBlockIds, mockBuyer);
+      expect(result).toBe(true);
+      expect(blockchainService.buyMultipleBlocks).toHaveBeenCalledWith(mockBlockIds, mockBuyer);
+    });
+  });
+
+  describe('getAllBlocksInfo', () => {
+    it('should return block info for a range of blocks', async () => {
+      const mockBlocksInfo: BlockInfo[] = [
+        { owned: true, owner: '0x123...', color: 1, price: ethers.parseEther('0.1') },
+        { owned: false, owner: '0x000...', color: 0, price: ethers.parseEther('0') },
+      ];
+      blockchainService.getAllBlocksInfo.mockResolvedValue(mockBlocksInfo);
+
+      const result = await service.getAllBlocksInfo(0, 1);
+      expect(result).toEqual(mockBlocksInfo);
+      expect(blockchainService.getAllBlocksInfo).toHaveBeenCalledWith(0, 1);
     });
   });
 });

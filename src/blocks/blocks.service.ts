@@ -1,13 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { BlockchainService } from '../blockchain/blockchain.service';
+import { BlockchainService, BlockInfo } from '../blockchain/blockchain.service';
 
 @Injectable()
 export class BlocksService {
   constructor(private blockchainService: BlockchainService) {}
-
-  async getBlockOwner(blockId: number): Promise<string> {
-    return await this.blockchainService.getBlockOwner(blockId);
-  }
 
   async buyBlock(blockId: number, buyer: string): Promise<boolean> {
     return await this.blockchainService.buyBlock(blockId, buyer);
@@ -17,11 +13,23 @@ export class BlocksService {
     return await this.blockchainService.sellBlock(blockId, seller, price);
   }
 
-  async changeBlockColor(blockId: number, color: 'black' | 'white', owner: string): Promise<boolean> {
-    return await this.blockchainService.changeBlockColor(blockId, color, owner);
+  async buyFromUser(blockId: number, buyer: string): Promise<boolean> {
+    return await this.blockchainService.buyFromUser(blockId, buyer);
   }
 
-  async getBlockColor(blockId: number): Promise<string> {
-    return await this.blockchainService.getBlockColor(blockId);
+  async setBlockColor(blockId: number, color: number, owner: string): Promise<boolean> {
+    return await this.blockchainService.setBlockColor(blockId, color, owner);
+  }
+
+  async getBlockInfo(blockId: number): Promise<BlockInfo> {
+    return await this.blockchainService.getBlockInfo(blockId);
+  }
+
+  async buyMultipleBlocks(blockIds: number[], buyer: string): Promise<boolean> {
+    return await this.blockchainService.buyMultipleBlocks(blockIds, buyer);
+  }
+
+  async getAllBlocksInfo(startId: number, endId: number): Promise<BlockInfo[]> {
+    return await this.blockchainService.getAllBlocksInfo(startId, endId);
   }
 }

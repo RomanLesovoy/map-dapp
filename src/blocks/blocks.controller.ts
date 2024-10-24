@@ -1,14 +1,10 @@
-import { Controller, Get, Post, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Query } from '@nestjs/common';
 import { BlocksService } from './blocks.service';
+import { BlockInfo } from '../blockchain/blockchain.service';
 
 @Controller('blocks')
 export class BlocksController {
   constructor(private readonly blocksService: BlocksService) {}
-
-  @Get(':id/owner')
-  async getBlockOwner(@Param('id') id: string) {
-    return await this.blocksService.getBlockOwner(parseInt(id));
-  }
 
   @Post(':id/buy')
   async buyBlock(@Param('id') id: string, @Body('buyer') buyer: string) {
@@ -24,17 +20,37 @@ export class BlocksController {
     return await this.blocksService.sellBlock(parseInt(id), seller, price);
   }
 
-  @Post(':id/color')
-  async changeBlockColor(
-    @Param('id') id: string,
-    @Body('color') color: 'black' | 'white',
-    @Body('owner') owner: string
-  ) {
-    return await this.blocksService.changeBlockColor(parseInt(id), color, owner);
+  @Post(':id/buy-from-user')
+  async buyFromUser(@Param('id') id: string, @Body('buyer') buyer: string) {
+    return await this.blocksService.buyFromUser(parseInt(id), buyer);
   }
 
-  @Get(':id/color')
-  async getBlockColor(@Param('id') id: string) {
-    return await this.blocksService.getBlockColor(parseInt(id));
+  @Post(':id/color')
+  async setBlockColor(
+    @Param('id') id: string,
+    @Body('color') color: number,
+    @Body('owner') owner: string
+  ) {
+    return await this.blocksService.setBlockColor(parseInt(id), color, owner);
+  }
+
+  @Get(':id')
+  async getBlockInfo(@Param('id') id: string): Promise<BlockInfo> {
+    return await this.blocksService.getBlockInfo(parseInt(id));
+  }
+
+  @Post('buy-multiple')
+  async buyMultipleBlocks(@Body('blockIds') blockIds: number[], @Body('buyer') buyer: string) {
+    return await this.blocksService.buyMultipleBlocks(blockIds, buyer);
+  }
+
+  @Get()
+  async getAllBlocksInfo(
+    @Query('startId') startId: string,
+    @Query('endId') endId: string
+  ): Promise<BlockInfo[]> {
+    const start = parseInt(startId);
+    const end = parseInt(endId);
+    return await this.blocksService.getAllBlocksInfo(start, end);
   }
 }
