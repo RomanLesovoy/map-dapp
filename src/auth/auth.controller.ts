@@ -9,4 +9,9 @@ export class AuthController {
   async authenticate(@Body() authData: { address: string; timestamp: number; signature: string }) {
     return this.authService.authenticate(authData);
   }
+
+  @Post('verify')
+  async verifyToken(@Body() body: { token: string }) {
+    return this.authService.verifyToken(body.token);
+  }
 }

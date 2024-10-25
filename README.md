@@ -33,6 +33,10 @@ Map DApp Backend is a NestJS-based service that facilitates interaction between 
 4. Create a `.env` file in the root directory of the project and add the following environment variables:
    ```
    CONTRACT_ADDRESS=your_contract_address
+   JWT_SECRET=secret
+   ETHEREUM_PROVIDER_URL=http://localhost:8545
+   PORT=3000
+   ORIGIN=http://localhost:3000
    ```
 
 ## Running the app
