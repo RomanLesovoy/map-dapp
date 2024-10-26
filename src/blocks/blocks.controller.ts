@@ -1,59 +1,15 @@
-import { Controller, Get, Post, Param, Body, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { BlocksService } from './blocks.service';
 import { BlockInfo } from '../blockchain/blockchain.service';
 import { AuthGuard } from '../auth/auth.guard';
-
+import { TransactionResponse } from 'ethers';
 @ApiTags('blocks')
 @Controller('blocks')
 @UseGuards(AuthGuard)
 export class BlocksController {
   constructor(private readonly blocksService: BlocksService) {}
 
-  @Post(':id/buy')
-  @ApiOperation({ summary: 'Buy a block' })
-  @ApiParam({ name: 'id', type: 'number' })
-  @ApiBody({ schema: { properties: { buyer: { type: 'string' } } } })
-  @ApiResponse({ status: 200, description: 'The block has been successfully bought.' })
-  async buyBlock(@Param('id') id: string, @Request() req) {
-    const userAddress = req.user.address;
-    return await this.blocksService.buyBlock(parseInt(id), userAddress);
-  }
-
-  @Post(':id/sell')
-  @ApiOperation({ summary: 'Sell a block' })
-  @ApiParam({ name: 'id', type: 'number' })
-  @ApiBody({ schema: { properties: { seller: { type: 'string' }, price: { type: 'string' } } } })
-  @ApiResponse({ status: 200, description: 'The block has been successfully put up for sale.' })
-  async sellBlock(
-    @Param('id') id: string,
-    @Body('seller') seller: string,
-    @Body('price') price: string
-  ) {
-    return await this.blocksService.sellBlock(parseInt(id), seller, price);
-  }
-
-  @Post(':id/buy-from-user')
-  @ApiOperation({ summary: 'Buy a block from another user' })
-  @ApiParam({ name: 'id', type: 'number' })
-  @ApiBody({ schema: { properties: { buyer: { type: 'string' } } } })
-  @ApiResponse({ status: 200, description: 'The block has been successfully bought from another user.' })
-  async buyFromUser(@Param('id') id: string, @Body('buyer') buyer: string) {
-    return await this.blocksService.buyFromUser(parseInt(id), buyer);
-  }
-
-  @Post(':id/color')
-  @ApiOperation({ summary: 'Set block color' })
-  @ApiParam({ name: 'id', type: 'number' })
-  @ApiBody({ schema: { properties: { color: { type: 'number' }, owner: { type: 'string' } } } })
-  @ApiResponse({ status: 200, description: 'The block color has been successfully set.' })
-  async setBlockColor(
-    @Param('id') id: string,
-    @Body('color') color: number,
-    @Body('owner') owner: string
-  ) {
-    return await this.blocksService.setBlockColor(parseInt(id), color, owner);
-  }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get block info' })
@@ -63,23 +19,6 @@ export class BlocksController {
     return await this.blocksService.getBlockInfo(parseInt(id));
   }
 
-  @Post('buy-multiple')
-  @ApiOperation({ summary: 'Buy multiple blocks' })
-  @ApiBody({ schema: { properties: { blockIds: { type: 'array', items: { type: 'number' } }, buyer: { type: 'string' } } } })
-  @ApiResponse({ status: 200, description: 'The blocks have been successfully bought.' })
-  async buyMultipleBlocks(@Body('blockIds') blockIds: number[], @Body('buyer') buyer: string) {
-    return await this.blocksService.buyMultipleBlocks(blockIds, buyer);
-  }
-
-  /**
-   * todo maybe load only 100 blocks at a time
-   * todo maybe add pagination
-   * todo maybe load blocks colors
-   * 
-   * @param startId 
-   * @param endId 
-   * @returns 
-   */
   @Get()
   @ApiOperation({ summary: 'Get all blocks info' })
   @ApiQuery({ name: 'startId', type: 'number' })
@@ -92,5 +31,90 @@ export class BlocksController {
     const start = parseInt(startId);
     const end = parseInt(endId);
     return await this.blocksService.getAllBlocksInfo(start, end);
+  }
+
+  @Post(':id/color')
+  @ApiOperation({ summary: 'Set block color' })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiBody({ schema: { properties: { color: { type: 'number' } } } })
+  @ApiResponse({ status: 200, description: 'Block color updated successfully.' })
+  async setBlockColor(
+    @Param('id') id: string,
+    @Body('color') color: number
+  ): Promise<TransactionResponse> {
+    return await this.blocksService.setBlockColor(parseInt(id), color);
+  }
+
+  @Post(':id/color-transaction')
+  @ApiOperation({ summary: 'Set block color' })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiBody({ schema: { properties: { color: { type: 'number' } } } })
+  @ApiResponse({ status: 200, description: 'Block color updated successfully.' })
+  async setBlockColorPrepareTransaction(
+    @Param('id') id: string,
+    @Body('color') color: number
+  ): Promise<{ data: string }> {
+    const data = await this.blocksService.setBlockColorPrepareTransaction(parseInt(id), color);
+    return { data };
+  }
+
+  @Post(':id/price')
+  @ApiOperation({ summary: 'Set block price' })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiBody({ schema: { properties: { price: { type: 'string' } } } })
+  @ApiResponse({ status: 200, description: 'Block price updated successfully.' })
+  async setBlockPrice(
+    @Param('id') id: string,
+    @Body('price') price: string
+  ): Promise<TransactionResponse> {
+    return await this.blocksService.setBlockPrice(parseInt(id), price);
+  }
+  
+  @Post(':id/price-transaction')
+  @ApiOperation({ summary: 'Get data for setting block price' })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiBody({ schema: { properties: { price: { type: 'string' } } } })
+  @ApiResponse({ status: 200, description: 'Returns the data for setting block price.' })
+  async getSetPriceData(
+    @Param('id') id: string,
+    @Body('price') price: string
+  ): Promise<{ data: string }> {
+    const data = await this.blocksService.setBlockPricePrepareTransaction(parseInt(id), price);
+    return { data };
+  }
+
+  @Post(':id/buy')
+  @ApiOperation({ summary: 'Buy block' })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiResponse({ status: 200, description: 'Block bought successfully.' })
+  async buyBlock(@Param('id') id: string): Promise<TransactionResponse> {
+    return await this.blocksService.buyBlock(parseInt(id));
+  }
+
+  @Get(':txHash/logs')
+  @ApiOperation({ summary: 'Get transaction logs' })
+  @ApiParam({ name: 'txHash', type: 'string' })
+  @ApiResponse({ status: 200, description: 'Returns the transaction logs.' })
+  async getTransactionLogs(@Param('txHash') txHash: string) {
+    return await this.blocksService.getTransactionLogs(txHash);
+  }
+
+  @Post(':id/cache')
+  @ApiOperation({ summary: 'Update cache' })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiResponse({ status: 200, description: 'Cache updated successfully.' })
+  async updateCache(@Param('id') id: string) {
+    return await this.blocksService.updateBlockInfoCache(parseInt(id));
+  }
+
+  @Post(':id/buy-transaction')
+  @ApiOperation({ summary: 'Get data for buying block' })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiResponse({ status: 200, description: 'Returns the data for buying block.' })
+  async getBuyData(
+    @Param('id') id: string
+  ): Promise<{ data: string }> {
+    const data = await this.blocksService.buyBlockPrepareTransaction(parseInt(id));
+    return { data };
   }
 }

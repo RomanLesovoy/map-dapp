@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { BaseContract, ethers } from 'ethers';
+import { BaseContract, ethers, TransactionResponse } from 'ethers';
 import * as dotenv from 'dotenv';
 import { ApiProperty } from '@nestjs/swagger';
 import { abi } from './abi';
@@ -36,60 +36,35 @@ interface ContractWithSigner extends BaseContract {
 export class BlockchainService {
   private provider: ethers.JsonRpcProvider;
   private contract: ethers.Contract;
+  private wallet: ethers.Wallet;
 
   constructor(private cacheService: CacheService) {
-    this.provider = new ethers.JsonRpcProvider(process.env.ETHEREUM_PROVIDER_URL);
-    this.contract = new ethers.Contract(process.env.CONTRACT_ADDRESS, abi, this.provider);
+    this.initializeProvider();
   }
 
-  async buyBlock(blockId: number, buyer: string): Promise<boolean> {
-    const signer = await this.provider.getSigner(buyer);
-    const contractWithSigner = this.contract.connect(signer) as ContractWithSigner;
-    const tx = await contractWithSigner.buyBlock(blockId);
-    await tx.wait();
-    this.updateBlockInfoCache(blockId);
-    return true;
+  async initializeProvider() {
+    try {
+      this.provider = new ethers.JsonRpcProvider(process.env.ETHEREUM_PROVIDER_URL);
+      const network = await this.provider.getNetwork();
+      console.log('Connected to network:', network.name);
+      await this.initializeContract();
+    } catch (error) {
+      console.error('Error initializing provider:', error);
+    }
   }
 
-  async setBlockPrice(blockId: number, price: string, buyer: string): Promise<boolean> {
-    const signer = await this.provider.getSigner(buyer);
-    const contractWithSigner = this.contract.connect(signer) as ContractWithSigner;
-    const tx = await contractWithSigner.setBlockPrice(blockId, ethers.parseEther(price));
-    await tx.wait();
-    this.updateBlockInfoCache(blockId);
-    return true;
-  }
-
-  async sellBlock(blockId: number, seller: string, price: string): Promise<boolean> {
-    const signer = await this.provider.getSigner(seller);
-    const contractWithSigner = this.contract.connect(signer) as ContractWithSigner;
-    const tx = await contractWithSigner.sellBlock(blockId, ethers.parseEther(price));
-    await tx.wait();
-    this.updateBlockInfoCache(blockId);
-    return true;
-  }
-
-  async buyFromUser(blockId: number, buyer: string): Promise<boolean> {
-    const signer = await this.provider.getSigner(buyer);
-    const contractWithSigner = this.contract.connect(signer) as ContractWithSigner;
-    const blockInfo = await this.contract.getBlockInfo(blockId);
-    const tx = await contractWithSigner.buyFromUser(blockId, { value: blockInfo.price });
-    await tx.wait();
-    this.updateBlockInfoCache(blockId);
-    return true;
-  }
-
-  async setBlockColor(blockId: number, color: number, owner: string): Promise<boolean> {
-    console.log('setBlockColor', blockId, color, owner)
-    const signer = await this.provider.getSigner(owner);
-    console.log(signer, blockId, color, owner)
-    const contractWithSigner = this.contract.connect(signer) as ContractWithSigner;
-    // console.log(contractWithSigner, 'contractWithSigner')
-    const tx = await contractWithSigner.setColor(blockId, color);
-    // console.log(tx, 'tx')
-    await tx.wait();
-    this.updateBlockInfoCache(blockId);
-    return true;
+  async initializeContract() {
+    try {
+      const contractAddress = process.env.CONTRACT_ADDRESS;
+      if (!contractAddress || !ethers.isAddress(contractAddress)) {
+        throw new Error('Invalid contract address');
+      }
+      this.contract = new ethers.Contract(contractAddress, abi, this.provider);
+      this.wallet = new ethers.Wallet(process.env.PRIVATE_KEY, this.provider);
+    } catch (error) {
+      console.error('Error in initializeContract:', error);
+      throw error;
+    }
   }
 
   async getBlockInfo(blockId: number): Promise<BlockInfo> {
@@ -104,29 +79,28 @@ export class BlockchainService {
     return blockInfo;
   }
 
-  async buyMultipleBlocks(blockIds: number[], buyer: string): Promise<boolean> {
-    const signer = await this.provider.getSigner(buyer);
-    const contractWithSigner = this.contract.connect(signer) as ContractWithSigner;
-    const totalCost = ethers.parseEther((0.1 * blockIds.length).toString());
-    const tx = await contractWithSigner.buyMultipleBlocks(blockIds, { value: totalCost });
-    await tx.wait();
-    blockIds.forEach(blockId => this.updateBlockInfoCache(blockId));
-    return true;
+  async getTransactionLogs(txHash: string) {
+    const receipt = await this.provider.getTransactionReceipt(txHash);
+    return receipt.logs;
   }
 
   async getAllBlocksInfo(startId: number, endId: number): Promise<BlockInfo[]> {
     try {
       const cacheKey = `blocks_${startId}_${endId}`;
+      /**
+       * TODO
+       * CACHE CHECK
+       */
       let blocksInfo = this.cacheService.get(cacheKey);
 
       if (!blocksInfo) {
-        console.log((await this.contract.getAllBlocksInfo(startId, endId)))
-        blocksInfo = (await this.contract.getAllBlocksInfo(startId, endId)).map((block: BlockInfo) => ({
-          id: parseBlockId(block.blockAddress),
-          owner: formatAddress(block.owner),
-          color: Number(block.color),
-          price: formatPrice(block.price),
-          priceWei: block.price.toString(),
+        const [owners, colors, prices] = await this.contract.getAllBlocksInfo(startId, endId);
+        blocksInfo = owners.map((owner: string, index: number) => ({
+          id: startId + index,
+          owner: formatAddress(owner),
+          color: Number(colors[index]),
+          price: formatPrice(prices[index]),
+          priceWei: prices[index].toString(),
         }));
       }
 
@@ -162,5 +136,59 @@ export class BlockchainService {
 
   clearCache(): void {
     this.cacheService.clear();
+  }
+
+  async buyBlock(blockId: number): Promise<TransactionResponse> {
+    try {
+      const contractWithSigner = this.contract.connect(this.wallet) as ContractWithSigner;
+      const tx = await contractWithSigner.buyBlock(blockId);
+      await tx.wait();
+      await this.updateBlockInfoCache(blockId);
+      return tx;
+    } catch (error) {
+      console.error('Error in buyBlock:', error);
+      throw error;
+    }
+  }
+
+  async setBlockColor(blockId: number, color: number): Promise<TransactionResponse> {
+    try {
+      const contractWithSigner = this.contract.connect(this.wallet) as ContractWithSigner;
+      const tx = await contractWithSigner.setColor(blockId, color);
+      await tx.wait();
+      await this.updateBlockInfoCache(blockId);
+      return tx;
+    } catch (error) {
+      console.error('Error in setBlockColor:', error);
+      throw error;
+    }
+  }
+
+  async setBlockPrice(blockId: number, price: string): Promise<TransactionResponse> {
+    try {
+      const contractWithSigner = this.contract.connect(this.wallet) as ContractWithSigner;
+      const priceString = typeof price === 'number' ? Number(price).toString() : price;
+      const priceWei = ethers.parseEther(priceString);
+      const tx = await contractWithSigner.setBlockPrice(blockId, priceWei);
+      await tx.wait();
+      await this.updateBlockInfoCache(blockId);
+      return tx;
+    } catch (error) {
+      console.error('Error in setBlockPrice:', error);
+      throw error;
+    }
+  }
+
+  async buyBlockPrepareTransaction(blockId: number): Promise<string> {
+    return this.contract.interface.encodeFunctionData('buyBlock', [blockId]);
+  }
+
+  async setBlockPricePrepareTransaction(blockId: number, price: string): Promise<string> {
+    const priceWei = ethers.parseEther(typeof price === 'number' ? Number(price).toString() : price);
+    return this.contract.interface.encodeFunctionData('setBlockPrice', [blockId, priceWei]);
+  }
+
+  async setBlockColorPrepareTransaction(blockId: number, color: number): Promise<string> {
+    return this.contract.interface.encodeFunctionData('setColor', [blockId, color]);
   }
 }
