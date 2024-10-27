@@ -102,8 +102,8 @@ export class BlocksController {
   @Post(':id/cache')
   @ApiOperation({ summary: 'Update cache' })
   @ApiParam({ name: 'id', type: 'number' })
-  @ApiResponse({ status: 200, description: 'Cache updated successfully.' })
-  async updateCache(@Param('id') id: string) {
+  @ApiResponse({ status: 200, description: 'Cache updated successfully.', type: BlockInfo })
+  async updateCache(@Param('id') id: string): Promise<BlockInfo> {
     return await this.blocksService.updateBlockInfoCache(parseInt(id));
   }
 

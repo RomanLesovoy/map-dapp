@@ -1,16 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { BaseContract, ethers, TransactionResponse } from 'ethers';
+import { BaseContract, BigNumberish, ethers, TransactionResponse } from 'ethers';
 import * as dotenv from 'dotenv';
 import { ApiProperty } from '@nestjs/swagger';
 import { abi } from './abi';
 import { CacheService } from '../cache/cache.service';
-import { formatAddress, formatPrice, parseBlockId } from './format-data';
+import { formatAddress, formatPrice } from './format-data';
 dotenv.config();
 
 export class BlockInfo {
-  @ApiProperty()
-  blockAddress: string;
-
   @ApiProperty()
   owner: string;
 
@@ -68,15 +65,7 @@ export class BlockchainService {
   }
 
   async getBlockInfo(blockId: number): Promise<BlockInfo> {
-    const cacheKey = `block_${blockId}`;
-    let blockInfo = this.cacheService.get(cacheKey);
-
-    if (!blockInfo) {
-      blockInfo = await this.contract.getBlockInfo(blockId);
-      this.cacheService.set(cacheKey, blockInfo);
-    }
-
-    return blockInfo;
+    return await this.contract.getBlockInfo(blockId);
   }
 
   async getTransactionLogs(txHash: string) {
@@ -87,14 +76,10 @@ export class BlockchainService {
   async getAllBlocksInfo(startId: number, endId: number): Promise<BlockInfo[]> {
     try {
       const cacheKey = `blocks_${startId}_${endId}`;
-      /**
-       * TODO
-       * CACHE CHECK
-       */
-      let blocksInfo = this.cacheService.get(cacheKey);
+      let blocksInfo: Array<BlockInfo> = this.cacheService.get(cacheKey);
 
       if (!blocksInfo) {
-        const [owners, colors, prices] = await this.contract.getAllBlocksInfo(startId, endId);
+        const [owners, colors, prices]: [string[], BigNumberish[], BigNumberish[]] = await this.contract.getAllBlocksInfo(startId, endId);
         blocksInfo = owners.map((owner: string, index: number) => ({
           id: startId + index,
           owner: formatAddress(owner),
@@ -112,11 +97,18 @@ export class BlockchainService {
     }
   }
 
-  async updateBlockInfoCache(blockId: number): Promise<void> {
-    const blockInfo = await this.contract.getBlockInfo(blockId);
-    const cacheKey = `block_${blockId}`;
-    this.cacheService.set(cacheKey, blockInfo);
-    this.updateInCacheRange(blockId, blockInfo);
+  async updateBlockInfoCache(blockId: number): Promise<BlockInfo> {
+    const blockInfo: [string, BigNumberish, BigNumberish] = await this.contract.getBlockInfo(blockId);
+    const blockData = {
+      id: blockId,
+      owner: formatAddress(blockInfo[0]),
+      color: Number(blockInfo[1]),
+      price: formatPrice(blockInfo[2]),
+      priceWei: blockInfo[2].toString(),
+    };
+    this.cacheService.set(`block_${blockId}`, blockData);
+    this.updateInCacheRange(blockId, blockData);
+    return blockData;
   }
 
   updateInCacheRange(blockId: number, blockInfo: BlockInfo): void {

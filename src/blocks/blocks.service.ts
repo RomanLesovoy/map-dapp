@@ -30,7 +30,7 @@ export class BlocksService {
     return this.blockchainService.setBlockColorPrepareTransaction(blockId, color);
   }
 
-  async updateBlockInfoCache(blockId: number): Promise<void> {
+  async updateBlockInfoCache(blockId: number): Promise<BlockInfo> {
     return this.blockchainService.updateBlockInfoCache(blockId);
   }
 
