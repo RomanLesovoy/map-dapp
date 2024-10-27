@@ -11,7 +11,6 @@ Map DApp Backend is a NestJS-based service that facilitates interaction between 
 - NestJS
 - TypeScript
 - ethers.js
-- Hardhat (for local development and testing)
 
 ## Installation
 
@@ -32,126 +31,66 @@ Map DApp Backend is a NestJS-based service that facilitates interaction between 
 
 4. Create a `.env` file in the root directory of the project and add the following environment variables:
    ```
-   CONTRACT_ADDRESS=your_contract_address
-   JWT_SECRET=secret
-   ETHEREUM_PROVIDER_URL=http://localhost:8545
-   PORT=3000
-   ORIGIN=http://localhost:3000
+    CONTRACT_ADDRESS={contract_address}
+    ORIGIN={origin}
+    PORT=3000
+    ETHEREUM_PROVIDER_URL={ethereum_provider_url}
+    JWT_SECRET={jwt_secret}
+    PRIVATE_KEY={private_key}
    ```
-
-## Running the app
-
-To run the server in development mode:
-
-```
-npm run start:dev
-```
-
-## Testing
-
-To run the tests:
-
-```
-npm run test
-```
 
 ## API Endpoints
 
-The Block Trading API provides the following endpoints:
+### Authentication
 
-### Get All Blocks Info
-- **GET** `/blocks`
-- **Query Parameters**: 
-  - `startId`: number (starting block ID)
-  - `endId`: number (ending block ID)
-- **Description**: Returns information about blocks in the specified range.
-- **Response**: Array of BlockInfo objects
+- `POST /auth`: Authenticate a user
+  - Body: `{ address: string, timestamp: number, signature: string }`
+- `POST /auth/verify`: Verify a JWT token
+  - Body: `{ token: string }`
 
-### Get Single Block Info
-- **GET** `/blocks/:id`
-- **Parameters**: 
-  - `id`: number (block ID)
-- **Description**: Returns information about a specific block.
-- **Response**: BlockInfo object
+### Blocks
 
-### Buy Block
-- **POST** `/blocks/:id/buy`
-- **Parameters**: 
-  - `id`: number (block ID)
-- **Body**: 
-  - `buyer`: string (Ethereum address of the buyer)
-- **Description**: Purchases a block.
-- **Response**: Boolean indicating success
+All block endpoints require authentication (AuthGuard).
 
-### Sell Block
-- **POST** `/blocks/:id/sell`
-- **Parameters**: 
-  - `id`: number (block ID)
-- **Body**: 
-  - `seller`: string (Ethereum address of the seller)
-  - `price`: string (price in ETH)
-- **Description**: Lists a block for sale.
-- **Response**: Boolean indicating success
+- `GET /blocks/:id`: Get information about a specific block
+  - Params: `id` (number)
 
-### Buy Block From User
-- **POST** `/blocks/:id/buy-from-user`
-- **Parameters**: 
-  - `id`: number (block ID)
-- **Body**: 
-  - `buyer`: string (Ethereum address of the buyer)
-- **Description**: Purchases a block that is listed for sale by another user.
-- **Response**: Boolean indicating success
+- `GET /blocks`: Get information about a range of blocks
+  - Query params: `startId` (number), `endId` (number)
 
-### Set Block Color
-- **POST** `/blocks/:id/color`
-- **Parameters**: 
-  - `id`: number (block ID)
-- **Body**: 
-  - `color`: number (color code)
-  - `owner`: string (Ethereum address of the block owner)
-- **Description**: Sets the color of a block.
-- **Response**: Boolean indicating success
+- `POST /blocks/:id/color`: Set the color of a block
+  - Params: `id` (number)
+  - Body: `{ color: number }`
 
-### Buy Multiple Blocks
-- **POST** `/blocks/buy-multiple`
-- **Body**: 
-  - `blockIds`: number[] (array of block IDs to purchase)
-  - `buyer`: string (Ethereum address of the buyer)
-- **Description**: Purchases multiple blocks in a single transaction.
-- **Response**: Boolean indicating success
+- `POST /blocks/:id/color-transaction`: Prepare transaction data for setting block color
+  - Params: `id` (number)
+  - Body: `{ color: number }`
 
-## BlockInfo Object
+- `POST /blocks/:id/price`: Set the price of a block
+  - Params: `id` (number)
+  - Body: `{ price: string }`
 
-The BlockInfo object contains the following properties:
+- `POST /blocks/:id/price-transaction`: Prepare transaction data for setting block price
+  - Params: `id` (number)
+  - Body: `{ price: string }`
 
-- `owned`: boolean (indicates if the block is owned)
-- `owner`: string (Ethereum address of the owner)
-- `color`: number (color code of the block)
-- `price`: string (price of the block in ETH)
+- `POST /blocks/:id/buy`: Buy a block
+  - Params: `id` (number)
+
+- `GET /blocks/:txHash/logs`: Get transaction logs
+  - Params: `txHash` (string)
+
+- `POST /blocks/:id/cache`: Update cache for a specific block
+  - Params: `id` (number)
+
+- `POST /blocks/:id/buy-transaction`: Prepare transaction data for buying a block
+  - Params: `id` (number)
 
 ## Smart Contract Interaction
 
 The project uses `BlockchainService` to interact with the smart contract. Make sure you have a local Hardhat node running or have set up a connection to an Ethereum test network.
 
 Smart contract repository: https://github.com/RomanLesovoy/map-dapp-contract
-
-## Development
-
-1. Ensure you have a local Hardhat node running:
-   ```
-   npx hardhat node
-   ```
-
-2. Deploy the smart contract to the local Hardhat network and update the `CONTRACT_ADDRESS` in the `.env` file.
-
-3. Run the server in development mode:
-   ```
-   npm run start:dev
-   ```
-
-## Contributing
-
-Please read `CONTRIBUTING.md` for details on our code of conduct and the process for submitting pull requests.
 
 ## License
 
