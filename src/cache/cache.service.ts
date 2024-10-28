@@ -1,6 +1,8 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { Logger } from '@nestjs/common';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 @Injectable()
 export class CacheService implements OnModuleInit {
@@ -9,14 +11,29 @@ export class CacheService implements OnModuleInit {
   private readonly DEFAULT_TTL = 300;
 
   constructor() {
-    this.redis = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: Number(process.env.REDIS_PORT) || 6379,
-      retryStrategy: (times) => {
+    const redisOptions = {
+      enableOfflineQueue: true,
+      connectTimeout: 20000,
+      disconnectTimeout: 3000,
+      commandTimeout: 5000,
+      keepAlive: 10000,
+      retryUnfulfilledCommands: true,
+      retryStrategy: (times: number) => {
         const delay = Math.min(times * 50, 2000);
         return delay;
+      },
+      maxRetriesPerRequest: 3,
+      enableReadyCheck: true,
+      reconnectOnError: (err: Error) => {
+        const targetError = 'READONLY';
+        if (err.message.includes(targetError)) {
+          return true;
+        }
+        return false;
       }
-    });
+    };
+
+    this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', redisOptions);
   }
 
   async onModuleInit() {
