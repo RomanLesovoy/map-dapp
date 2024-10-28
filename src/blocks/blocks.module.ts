@@ -12,10 +12,7 @@ import { CacheService } from '../cache/cache.service';
   imports: [
     AuthModule,
     BullModule.forRoot({
-      redis: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: Number(process.env.REDIS_PORT) || 6379,
-      },
+      redis: process.env.REDIS_URL || 'redis://localhost:6379',
     }),
     BullModule.registerQueue({
       name: 'blocks',
