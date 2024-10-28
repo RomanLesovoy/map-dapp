@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { BaseContract, BigNumberish, ethers, TransactionResponse } from 'ethers';
 import * as dotenv from 'dotenv';
 import { ApiProperty } from '@nestjs/swagger';
@@ -35,7 +35,10 @@ export class BlockchainService {
   private contract: ethers.Contract;
   private wallet: ethers.Wallet;
 
-  constructor(private cacheService: CacheService) {
+  constructor(
+    private readonly cacheService: CacheService,
+    private readonly logger: Logger,
+  ) {
     this.initializeProvider();
   }
 
@@ -43,10 +46,10 @@ export class BlockchainService {
     try {
       this.provider = new ethers.JsonRpcProvider(process.env.ETHEREUM_PROVIDER_URL);
       const network = await this.provider.getNetwork();
-      console.log('Connected to network:', network.name);
+      this.logger.log('Connected to network:', network.name);
       await this.initializeContract();
     } catch (error) {
-      console.error('Error initializing provider:', error);
+      this.logger.error('Error initializing provider:', error);
     }
   }
 
@@ -59,7 +62,7 @@ export class BlockchainService {
       this.contract = new ethers.Contract(contractAddress, abi, this.provider);
       this.wallet = new ethers.Wallet(process.env.PRIVATE_KEY, this.provider);
     } catch (error) {
-      console.error('Error in initializeContract:', error);
+      this.logger.error('Error in initializeContract:', error);
       throw error;
     }
   }
@@ -92,7 +95,7 @@ export class BlockchainService {
       this.cacheService.set(cacheKey, blocksInfo);
       return blocksInfo;
     } catch (e) {
-      console.error('Error in getAllBlocksInfo:', e);
+      this.logger.error('Error in getAllBlocksInfo:', e);
       throw e;
     }
   }
@@ -138,7 +141,7 @@ export class BlockchainService {
       await this.updateBlockInfoCache(blockId);
       return tx;
     } catch (error) {
-      console.error('Error in buyBlock:', error);
+      this.logger.error('Error in buyBlock:', error);
       throw error;
     }
   }
@@ -151,7 +154,7 @@ export class BlockchainService {
       await this.updateBlockInfoCache(blockId);
       return tx;
     } catch (error) {
-      console.error('Error in setBlockColor:', error);
+      this.logger.error('Error in setBlockColor:', error);
       throw error;
     }
   }
@@ -166,7 +169,7 @@ export class BlockchainService {
       await this.updateBlockInfoCache(blockId);
       return tx;
     } catch (error) {
-      console.error('Error in setBlockPrice:', error);
+      this.logger.error('Error in setBlockPrice:', error);
       throw error;
     }
   }

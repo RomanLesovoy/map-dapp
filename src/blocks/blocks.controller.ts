@@ -4,12 +4,28 @@ import { BlocksService } from './blocks.service';
 import { BlockInfo } from '../blockchain/blockchain.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { TransactionResponse } from 'ethers';
+import { BlocksQueue } from './blocks.queue';
+
 @ApiTags('blocks')
 @Controller('blocks')
 @UseGuards(AuthGuard)
 export class BlocksController {
-  constructor(private readonly blocksService: BlocksService) {}
+  constructor(
+    private readonly blocksService: BlocksService,
+    private readonly blocksQueue: BlocksQueue,
+  ) {}
 
+  @Get('queue')
+  @ApiOperation({ summary: 'Get all blocks info (Queue)' })
+  @ApiQuery({ name: 'startId', type: 'number' })
+  @ApiQuery({ name: 'endId', type: 'number' })
+  @ApiResponse({ status: 200, description: 'Returns the info for all blocks in the specified range. (Queue)', type: [BlockInfo] })
+  async queueBlocksInfo(
+    @Query('startId') startId: string,
+    @Query('endId') endId: string,
+  ): Promise<BlockInfo[]> {
+    return await this.blocksQueue.processBlocksInfo(parseInt(startId), parseInt(endId));
+  }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get block info' })
@@ -28,9 +44,7 @@ export class BlocksController {
     @Query('startId') startId: string,
     @Query('endId') endId: string
   ): Promise<BlockInfo[]> {
-    const start = parseInt(startId);
-    const end = parseInt(endId);
-    return await this.blocksService.getAllBlocksInfo(start, end);
+    return await this.blocksService.getAllBlocksInfo(parseInt(startId), parseInt(endId));
   }
 
   @Post(':id/color')

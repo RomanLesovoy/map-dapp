@@ -1,10 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { BlockchainService, BlockInfo } from '../blockchain/blockchain.service';
 import { TransactionResponse } from 'ethers';
+import { BlocksQueue } from './blocks.queue';
 
 @Injectable()
 export class BlocksService {
-  constructor(private blockchainService: BlockchainService) {}
+  constructor(
+    private readonly blockchainService: BlockchainService,
+    private readonly blocksQueue: BlocksQueue,
+    private readonly logger: Logger,
+  ) {}
+
+  async getAllBlocksInfoQueue(startId: number, endId: number): Promise<BlockInfo[]> {
+    try {
+      console.log('getAllBlocksInfoQueue startId:', startId);
+      return await this.blocksQueue.processBlocksInfo(startId, endId);
+    } catch (error) {
+      this.logger.error('Error getting blocks info:', error);
+      throw error;
+    }
+  }
 
   async setBlockColor(blockId: number, color: number): Promise<TransactionResponse> {
     return await this.blockchainService.setBlockColor(blockId, color);
