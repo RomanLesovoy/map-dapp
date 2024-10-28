@@ -79,10 +79,12 @@ export class BlockchainService {
   async getAllBlocksInfo(startId: number, endId: number): Promise<BlockInfo[]> {
     try {
       const cacheKey = `blocks_${startId}_${endId}`;
-      let blocksInfo: Array<BlockInfo> = this.cacheService.get(cacheKey);
+      let blocksInfo = await this.cacheService.get(cacheKey);
 
       if (!blocksInfo) {
-        const [owners, colors, prices]: [string[], BigNumberish[], BigNumberish[]] = await this.contract.getAllBlocksInfo(startId, endId);
+        const [owners, colors, prices]: [string[], BigNumberish[], BigNumberish[]] = 
+          await this.contract.getAllBlocksInfo(startId, endId);
+        
         blocksInfo = owners.map((owner: string, index: number) => ({
           id: startId + index,
           owner: formatAddress(owner),
@@ -90,9 +92,10 @@ export class BlockchainService {
           price: formatPrice(prices[index]),
           priceWei: prices[index].toString(),
         }));
+
+        await this.cacheService.set(cacheKey, blocksInfo);
       }
 
-      this.cacheService.set(cacheKey, blocksInfo);
       return blocksInfo;
     } catch (e) {
       this.logger.error('Error in getAllBlocksInfo:', e);
@@ -109,28 +112,11 @@ export class BlockchainService {
       price: formatPrice(blockInfo[2]),
       priceWei: blockInfo[2].toString(),
     };
-    this.cacheService.set(`block_${blockId}`, blockData);
-    this.updateInCacheRange(blockId, blockData);
+    
+    await this.cacheService.set(`block_${blockId}`, blockData);
+    await this.cacheService.updateBlockInRanges(blockId, blockData);
+    
     return blockData;
-  }
-
-  updateInCacheRange(blockId: number, blockInfo: BlockInfo): void {
-    const allCacheKeys = Array.from(this.cacheService.keys());
-    const rangeKeys = allCacheKeys.filter(key => key.startsWith('blocks_'));
-    for (const rangeKey of rangeKeys) {
-      const [, start, end] = rangeKey.split('_').map(Number);
-      if (blockId >= start && blockId <= end) {
-        const rangeInfo = this.cacheService.get(rangeKey);
-        if (rangeInfo) {
-          rangeInfo[blockId - start] = blockInfo;
-          this.cacheService.set(rangeKey, rangeInfo);
-        }
-      }
-    }
-  }
-
-  clearCache(): void {
-    this.cacheService.clear();
   }
 
   async buyBlock(blockId: number): Promise<TransactionResponse> {

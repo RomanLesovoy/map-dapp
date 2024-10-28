@@ -13,7 +13,6 @@ export class BlocksService {
 
   async getAllBlocksInfoQueue(startId: number, endId: number): Promise<BlockInfo[]> {
     try {
-      console.log('getAllBlocksInfoQueue startId:', startId);
       return await this.blocksQueue.processBlocksInfo(startId, endId);
     } catch (error) {
       this.logger.error('Error getting blocks info:', error);

@@ -1,47 +1,113 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Redis } from 'ioredis';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
-export class CacheService {
-  private cache: Map<string, any>;
-  private lastUpdate: Map<string, number>;
-  private readonly DEFAULT_TTL = 5 * 60 * 1000; // 5 минут в миллисекундах
+export class CacheService implements OnModuleInit {
+  private readonly redis: Redis;
+  private readonly logger = new Logger(CacheService.name);
+  private readonly DEFAULT_TTL = 300;
 
   constructor() {
-    this.cache = new Map();
-    this.lastUpdate = new Map();
+    this.redis = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: Number(process.env.REDIS_PORT) || 6379,
+      retryStrategy: (times) => {
+        const delay = Math.min(times * 50, 2000);
+        return delay;
+      }
+    });
   }
 
-  keys(): string[] {
-    return Array.from(this.cache.keys());
-  }
-
-  set(key: string, value: any, ttl: number = this.DEFAULT_TTL): void {
-    this.cache.set(key, value);
-    this.lastUpdate.set(key, Date.now() + ttl);
-  }
-
-  get(key: string): any | null {
-    if (this.has(key)) {
-      return this.cache.get(key);
+  async onModuleInit() {
+    try {
+      await this.redis.ping();
+      this.logger.log('Successfully connected to Redis');
+    } catch (e) {
+      this.logger.error('Failed to connect to Redis:', e);
     }
-    return null;
   }
 
-  has(key: string): boolean {
-    if (!this.cache.has(key)) {
+  async keys(pattern: string = '*'): Promise<string[]> {
+    return await this.redis.keys(pattern);
+  }
+
+  async set(key: string, value: any, ttl: number = this.DEFAULT_TTL): Promise<void> {
+    try {
+      const serializedValue = JSON.stringify(value);
+      await this.redis.setex(key, ttl, serializedValue);
+    } catch (e) {
+      this.logger.error(`Error setting cache key ${key}:`, e);
+      throw e;
+    }
+  }
+
+  async get(key: string): Promise<any | null> {
+    try {
+      const value = await this.redis.get(key);
+      if (!value) return null;
+      return JSON.parse(value);
+    } catch (e) {
+      this.logger.error(`Error getting cache key ${key}:`, e);
+      return null;
+    }
+  }
+
+  async has(key: string): Promise<boolean> {
+    try {
+      return await this.redis.exists(key) === 1;
+    } catch (e) {
+      this.logger.error(`Error checking cache key ${key}:`, e);
       return false;
     }
-    const expirationTime = this.lastUpdate.get(key);
-    return expirationTime > Date.now();
   }
 
-  delete(key: string): void {
-    this.cache.delete(key);
-    this.lastUpdate.delete(key);
+  async delete(key: string): Promise<void> {
+    try {
+      await this.redis.del(key);
+    } catch (e) {
+      this.logger.error(`Error deleting cache key ${key}:`, e);
+      throw e;
+    }
   }
 
-  clear(): void {
-    this.cache.clear();
-    this.lastUpdate.clear();
+  async clear(): Promise<void> {
+    try {
+      await this.redis.flushdb();
+    } catch (e) {
+      this.logger.error('Error clearing cache:', e);
+      throw e;
+    }
+  }
+
+  // ------------------- BLOCKS RANGE -------------------
+
+  async setBlocksRange(startId: number, endId: number, blocks: any[]): Promise<void> {
+    const key = `blocks_${startId}_${endId}`;
+    await this.set(key, blocks);
+  }
+
+  async getBlocksRange(startId: number, endId: number): Promise<any[] | null> {
+    const key = `blocks_${startId}_${endId}`;
+    return await this.get(key);
+  }
+
+  async updateBlockInRanges(blockId: number, blockInfo: any): Promise<void> {
+    try {
+      const rangeKeys = await this.keys('blocks_*');
+      for (const rangeKey of rangeKeys) {
+        const [, start, end] = rangeKey.split('_').map(Number);
+        if (blockId >= start && blockId <= end) {
+          const rangeInfo = await this.get(rangeKey);
+          if (rangeInfo) {
+            rangeInfo[blockId - start] = blockInfo;
+            await this.set(rangeKey, rangeInfo);
+          }
+        }
+      }
+    } catch (e) {
+      this.logger.error(`Error updating block ${blockId} in ranges:`, e);
+      throw e;
+    }
   }
 }
