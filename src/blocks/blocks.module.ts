@@ -7,6 +7,8 @@ import { BlocksController } from './blocks.controller';
 import { BlockchainService } from '../blockchain/blockchain.service';
 import { AuthModule } from '../auth/auth.module';
 import { CacheService } from '../cache/cache.service';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 @Module({
   imports: [
