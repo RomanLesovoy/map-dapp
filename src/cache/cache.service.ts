@@ -8,7 +8,7 @@ dotenv.config();
 export class CacheService implements OnModuleInit {
   private readonly redis: Redis;
   private readonly logger = new Logger(CacheService.name);
-  private readonly DEFAULT_TTL = 300;
+  private readonly DEFAULT_TTL = 86400; // 24 hours
 
   constructor() {
     const redisOptions = {
