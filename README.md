@@ -6,11 +6,16 @@ This project is a backend service for Map DApp, a decentralized application for 
 
 Map DApp Backend is a NestJS-based service that facilitates interaction between the frontend application and the Ethereum smart contract. It provides an API for performing operations on map blocks, such as buying, selling, and changing block colors.
 
+root # API Gateway (main application)
+├── auth-service/ # Auth microservice
+└── blocks-service/ # Blocks microservice
+
 ## Technologies
 
 - NestJS
 - TypeScript
 - ethers.js
+- gRPC
 
 ## Installation
 
@@ -27,9 +32,11 @@ Map DApp Backend is a NestJS-based service that facilitates interaction between 
 3. Install dependencies:
    ```
    npm install
+   cd apps/auth-service && npm install
+   cd apps/blocks-service && npm install
    ```
 
-4. Create a `.env` file in the root directory of the project and add the following environment variables:
+4. Create a `.env` file in the root directory of the project and in each microservice directory and add the following environment variables:
    ```
     CONTRACT_ADDRESS={contract_address}
     ORIGIN={origin}
@@ -37,6 +44,10 @@ Map DApp Backend is a NestJS-based service that facilitates interaction between 
     ETHEREUM_PROVIDER_URL={ethereum_provider_url}
     JWT_SECRET={jwt_secret}
     PRIVATE_KEY={private_key}
+    AUTH_SERVICE_URL={auth_service_url}
+    BLOCKS_SERVICE_URL={blocks_service_url}
+    REDIS_HOST={redis_host}
+    REDIS_PORT={redis_port}
    ```
 
 ## API Endpoints
