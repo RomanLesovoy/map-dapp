@@ -1,5 +1,5 @@
 {
-  "name": "blocks-service",
+  "name": "mapp-dapp-blocks-service",
   "version": "1.0.0",
   "scripts": {
     "build": "nest build",
@@ -25,4 +25,4 @@
     "@types/node": "^20.0.0",
     "typescript": "^5.0.0"
   }
-} 
+}

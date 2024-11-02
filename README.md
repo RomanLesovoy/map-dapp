@@ -19,36 +19,20 @@ root # API Gateway (main application)
 
 ## Installation
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/your-username/map-dapp-backend.git
-   ```
+There are two ways to install and run the application:
 
-2. Navigate to the project directory:
-   ```
-   cd map-dapp-backend
-   ```
+1. [Direct Installation](direct-install.md)
+   - Traditional method
+   - Good for development
+   - Requires Node.js and Redis installed locally
+   - More control over each service
 
-3. Install dependencies:
-   ```
-   npm install
-   cd apps/auth-service && npm install
-   cd apps/blocks-service && npm install
-   ```
-
-4. Create a `.env` file in the root directory of the project and in each microservice directory and add the following environment variables:
-   ```
-    CONTRACT_ADDRESS={contract_address}
-    ORIGIN={origin}
-    PORT=3000
-    ETHEREUM_PROVIDER_URL={ethereum_provider_url}
-    JWT_SECRET={jwt_secret}
-    PRIVATE_KEY={private_key}
-    AUTH_SERVICE_URL={auth_service_url}
-    BLOCKS_SERVICE_URL={blocks_service_url}
-    REDIS_HOST={redis_host}
-    REDIS_PORT={redis_port}
-   ```
+2. [Docker Installation](docker-install.md) (recommended)
+   - Containerized deployment
+   - Easy to set up
+   - Consistent environment
+   - Better for production
+   - Includes Redis container
 
 ## API Endpoints
 
