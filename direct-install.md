@@ -37,7 +37,6 @@ JWT_SECRET={jwt_secret}
 ```env
 CONTRACT_ADDRESS={contract_address}
 ETHEREUM_PROVIDER_URL={ethereum_provider_url}
-PRIVATE_KEY={private_key}
 BLOCKS_SERVICE_URL={blocks_service_url}
 REDIS_HOST={redis_host}
 REDIS_PORT={redis_port}
