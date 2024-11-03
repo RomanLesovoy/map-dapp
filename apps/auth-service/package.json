@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "build": "nest build",
-    "start": "node dist/main",
+    "start": "npm run build && node dist/main",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch"
   },
@@ -15,6 +15,7 @@
     "@grpc/proto-loader": "^0.7.0",
     "jsonwebtoken": "^9.0.0",
     "ethers": "^6.0.0",
+    "dotenv": "^16.4.5",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1"
   },

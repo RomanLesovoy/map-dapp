@@ -5,9 +5,6 @@ package blocks;
 service BlocksService {
   rpc GetBlockInfo (BlockRequest) returns (BlockInfo);
   rpc GetBlocksInfo (BlocksRequest) returns (BlocksResponse);
-  rpc SetBlockColor (SetColorRequest) returns (TransactionResponse);
-  rpc SetBlockPrice (SetPriceRequest) returns (TransactionResponse);
-  rpc BuyBlock (BlockRequest) returns (TransactionResponse);
   rpc GetTransactionLogs (TxRequest) returns (LogsResponse);
   rpc UpdateBlockCache (BlockRequest) returns (BlockInfo);
   rpc PrepareTransaction (PrepareTransactionRequest) returns (PrepareTransactionResponse);
@@ -32,16 +29,6 @@ message BlocksRequest {
 
 message BlocksResponse {
   repeated BlockInfo blocks = 1;
-}
-
-message SetColorRequest {
-  int32 blockId = 1;
-  int32 color = 2;
-}
-
-message SetPriceRequest {
-  int32 blockId = 1;
-  string price = 2;
 }
 
 message TransactionResponse {

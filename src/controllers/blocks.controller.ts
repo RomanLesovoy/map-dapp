@@ -54,17 +54,6 @@ export class BlocksController implements OnModuleInit {
     return firstValueFrom(this.blocksService.getAllBlocksInfo(parseInt(startId), parseInt(endId)));
   }
 
-  @Post(':id/color')
-  @ApiOperation({ summary: 'Set block color' })
-  @ApiParam({ name: 'id', type: 'number' })
-  @ApiBody({ schema: { properties: { color: { type: 'number' } } } })
-  async setBlockColor(
-    @Param('id') id: string,
-    @Body('color') color: number
-  ) {
-    return firstValueFrom(this.blocksService.setBlockColor(parseInt(id), color));
-  }
-
   @Post(':id/color-transaction')
   @ApiOperation({ summary: 'Set block color' })
   @ApiParam({ name: 'id', type: 'number' })
@@ -73,18 +62,11 @@ export class BlocksController implements OnModuleInit {
     @Param('id') id: string,
     @Body('color') color: number
   ) {
-    return firstValueFrom(this.blocksService.setBlockColorPrepareTransaction(parseInt(id), color));
-  }
-
-  @Post(':id/price')
-  @ApiOperation({ summary: 'Set block price' })
-  @ApiParam({ name: 'id', type: 'number' })
-  @ApiBody({ schema: { properties: { price: { type: 'string' } } } })
-  async setBlockPrice(
-    @Param('id') id: string,
-    @Body('price') price: string
-  ) {
-    return firstValueFrom(this.blocksService.setBlockPrice(parseInt(id), price));
+    return firstValueFrom(this.blocksService.prepareTransaction({
+      action: 'setColor',
+      blockId: parseInt(id),
+      color
+    }));
   }
   
   @Post(':id/price-transaction')
@@ -95,28 +77,25 @@ export class BlocksController implements OnModuleInit {
     @Param('id') id: string,
     @Body('price') price: string
   ) {
-    return firstValueFrom(this.blocksService.setBlockPricePrepareTransaction(parseInt(id), price));
-  }
-
-  @Post(':id/buy')
-  @ApiOperation({ summary: 'Buy block' })
-  @ApiParam({ name: 'id', type: 'number' })
-  async buyBlock(@Param('id') id: string) {
-    return firstValueFrom(this.blocksService.buyBlock(parseInt(id)));
+    return firstValueFrom(this.blocksService.prepareTransaction({
+      action: 'setPrice',
+      blockId: parseInt(id),
+      price
+    }));
   }
 
   @Get(':txHash/logs')
   @ApiOperation({ summary: 'Get transaction logs' })
   @ApiParam({ name: 'txHash', type: 'string' })
   async getTransactionLogs(@Param('txHash') txHash: string) {
-    return firstValueFrom(this.blocksService.getTransactionLogs(txHash));
+    return firstValueFrom(this.blocksService.getTransactionLogs({ txHash }));
   }
 
   @Post(':id/cache')
   @ApiOperation({ summary: 'Update cache' })
   @ApiParam({ name: 'id', type: 'number' })
   async updateCache(@Param('id') id: string) {
-    return firstValueFrom(this.blocksService.updateBlockInfoCache(parseInt(id)));
+    return firstValueFrom(this.blocksService.updateBlockCache({ blockId: parseInt(id) }));
   }
 
   @Post(':id/buy-transaction')
@@ -125,6 +104,9 @@ export class BlocksController implements OnModuleInit {
   async getBuyData(
     @Param('id') id: string
   ) {
-    return firstValueFrom(this.blocksService.buyBlockPrepareTransaction(parseInt(id)));
+    return firstValueFrom(this.blocksService.prepareTransaction({
+      action: 'buy',
+      blockId: parseInt(id)
+    }));
   }
 } 

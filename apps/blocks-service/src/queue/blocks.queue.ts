@@ -4,16 +4,25 @@ import { InjectQueue } from '@nestjs/bull';
 
 @Injectable()
 export class BlocksQueue {
+  private readonly logger = new Logger(BlocksQueue.name);
+
   constructor(
     @InjectQueue('blocks') private readonly blocksQueue: Queue,
-    private readonly logger: Logger,
-  ) {}
+  ) {
+    this.blocksQueue.setMaxListeners(25);
+  }
+
+  async onModuleInit() {
+    await this.clearQueue();
+    this.logger.log('Blocks queue initialized');
+  }
 
   async processBlocksInfo(startId: number, endId: number) {
     const job = await this.blocksQueue.add(
       'getBlocksInfo',
       { startId, endId },
       {
+        removeOnFail: true,
         attempts: 3,
         backoff: {
           type: 'exponential',
@@ -29,6 +38,17 @@ export class BlocksQueue {
       return result;
     } catch (e) {
       this.logger.error('Error in processBlocksInfo:', e);
+      throw e;
+    }
+  }
+
+  async clearQueue() {
+    try {
+      await this.blocksQueue.empty();
+      this.logger.log('Queue cleared successfully');
+    } catch (error) {
+      this.logger.error('Error clearing queue:', error);
+      throw error;
     }
   }
 }

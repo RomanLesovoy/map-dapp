@@ -53,24 +53,13 @@ All block endpoints require authentication (AuthGuard).
 - `GET /blocks`: Get information about a range of blocks
   - Query params: `startId` (number), `endId` (number)
 
-- `POST /blocks/:id/color`: Set the color of a block
-  - Params: `id` (number)
-  - Body: `{ color: number }`
-
 - `POST /blocks/:id/color-transaction`: Prepare transaction data for setting block color
   - Params: `id` (number)
   - Body: `{ color: number }`
 
-- `POST /blocks/:id/price`: Set the price of a block
-  - Params: `id` (number)
-  - Body: `{ price: string }`
-
 - `POST /blocks/:id/price-transaction`: Prepare transaction data for setting block price
   - Params: `id` (number)
   - Body: `{ price: string }`
-
-- `POST /blocks/:id/buy`: Buy a block
-  - Params: `id` (number)
 
 - `GET /blocks/:txHash/logs`: Get transaction logs
   - Params: `txHash` (string)

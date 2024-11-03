@@ -17,21 +17,6 @@ export class BlocksController {
   }
 
   @GrpcMethod('BlocksService')
-  async setBlockColor(data: { blockId: number; color: number }) {
-    return this.blocksService.setBlockColor(data);
-  }
-
-  @GrpcMethod('BlocksService')
-  async setBlockPrice(data: { blockId: number; price: string }) {
-    return this.blocksService.setBlockPrice(data);
-  }
-
-  @GrpcMethod('BlocksService')
-  async buyBlock(data: { blockId: number }) {
-    return this.blocksService.buyBlock(data);
-  }
-
-  @GrpcMethod('BlocksService')
   async getTransactionLogs(data: { txHash: string }) {
     return this.blocksService.getTransactionLogs(data);
   }
@@ -42,7 +27,7 @@ export class BlocksController {
   }
 
   @GrpcMethod('BlocksService')
-  async prepareTransaction(data: { action: string; blockId: number; color?: number; price?: string }) {
+  async prepareTransaction(data: { action: 'buy' | 'setColor' | 'setPrice'; blockId: number; color?: number; price?: string }) {
     return this.blocksService.prepareTransaction(data);
   }
 }

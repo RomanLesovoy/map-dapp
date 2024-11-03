@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BaseContract, BigNumberish, ethers, TransactionResponse } from 'ethers';
+import { BaseContract, BigNumberish, ethers } from 'ethers';
 import * as dotenv from 'dotenv';
 import { ApiProperty } from '@nestjs/swagger';
 import { abi } from './abi';
@@ -33,7 +33,6 @@ interface ContractWithSigner extends BaseContract {
 export class BlockchainService {
   private provider: ethers.JsonRpcProvider;
   private contract: ethers.Contract;
-  private wallet: ethers.Wallet;
 
   constructor(
     private readonly cacheService: CacheService,
@@ -59,8 +58,8 @@ export class BlockchainService {
       if (!contractAddress || !ethers.isAddress(contractAddress)) {
         throw new Error('Invalid contract address');
       }
-      this.contract = new ethers.Contract(contractAddress, abi, this.provider);
-      this.wallet = new ethers.Wallet(process.env.PRIVATE_KEY, this.provider);
+      // @ts-ignore
+      this.contract = new ethers.Contract(contractAddress, abi, this.provider) as unknown as ContractWithSigner;
     } catch (error) {
       this.logger.error('Error in initializeContract:', error);
       throw error;
@@ -117,47 +116,6 @@ export class BlockchainService {
     await this.cacheService.updateBlockInRanges(blockId, blockData);
     
     return blockData;
-  }
-
-  async buyBlock(blockId: number): Promise<TransactionResponse> {
-    try {
-      const contractWithSigner = this.contract.connect(this.wallet) as ContractWithSigner;
-      const tx = await contractWithSigner.buyBlock(blockId);
-      await tx.wait();
-      await this.updateBlockInfoCache(blockId);
-      return tx;
-    } catch (error) {
-      this.logger.error('Error in buyBlock:', error);
-      throw error;
-    }
-  }
-
-  async setBlockColor(blockId: number, color: number): Promise<TransactionResponse> {
-    try {
-      const contractWithSigner = this.contract.connect(this.wallet) as ContractWithSigner;
-      const tx = await contractWithSigner.setColor(blockId, color);
-      await tx.wait();
-      await this.updateBlockInfoCache(blockId);
-      return tx;
-    } catch (error) {
-      this.logger.error('Error in setBlockColor:', error);
-      throw error;
-    }
-  }
-
-  async setBlockPrice(blockId: number, price: string): Promise<TransactionResponse> {
-    try {
-      const contractWithSigner = this.contract.connect(this.wallet) as ContractWithSigner;
-      const priceString = typeof price === 'number' ? Number(price).toString() : price;
-      const priceWei = ethers.parseEther(priceString);
-      const tx = await contractWithSigner.setBlockPrice(blockId, priceWei);
-      await tx.wait();
-      await this.updateBlockInfoCache(blockId);
-      return tx;
-    } catch (error) {
-      this.logger.error('Error in setBlockPrice:', error);
-      throw error;
-    }
   }
 
   async buyBlockPrepareTransaction(blockId: number): Promise<string> {

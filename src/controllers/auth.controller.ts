@@ -20,4 +20,10 @@ export class AuthController implements OnModuleInit {
   async authenticate(@Body() authData: { address: string; timestamp: number; signature: string }) {
     return firstValueFrom(this.authService.authenticate(authData));
   }
-} 
+
+  @Post('/verify')
+  @ApiOperation({ summary: 'Verify token' })
+  async verify(@Body() authData: { token: string }) {
+    return firstValueFrom(this.authService.verifyToken(authData));
+  }
+}

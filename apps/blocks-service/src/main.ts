@@ -3,6 +3,8 @@ import { Transport } from '@nestjs/microservices';
 import { join } from 'path';
 import { BlocksModule } from './blocks.module';
 import { Logger } from '@nestjs/common';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 async function bootstrap() {
   const logger = new Logger('BlocksService');
@@ -17,6 +19,6 @@ async function bootstrap() {
   });
 
   await app.listen();
-  logger.log('Blocks microservice is listening');
+  logger.log(`Blocks microservice is listening on ${process.env.BLOCKS_SERVICE_URL}`);
 }
 bootstrap();
